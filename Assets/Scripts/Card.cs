@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -50,7 +51,9 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
         get { return _mana; }
         set
         {
-            StartCoroutine(UpdateTextCor(_mana, value, _manaText));
+            var duration = Mathf.Abs (_changeTimeout * (_mana - value));
+            DOVirtual.Float(_mana, value, duration, (v) => _manaText.text = ((int) v).ToString());
+           
             _mana = value;
         }
     }
@@ -61,7 +64,9 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
         get { return _attack; }
         set
         {
-            StartCoroutine(UpdateTextCor(_attack, value, _attackText));
+            var duration = Mathf.Abs(_changeTimeout * (_attack - value));
+            DOVirtual.Float(_attack, value, duration, (v) => _attackText.text = ((int)v).ToString());           
+            
             _attack = value;           
         }
     }
@@ -72,7 +77,11 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
         get { return _health; }
         set
         {
-            StartCoroutine(UpdateTextCor(_health, value, _healthText, true));
+            var duration = Mathf.Abs(_changeTimeout * (_health - value));
+            DOVirtual
+                .Float(_health, value, duration, (v) => _healthText.text = ((int)v).ToString())
+                .OnComplete(CheckHealth);
+            
             _health = value;
         }
     }
@@ -105,7 +114,7 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
     }
 
     public void Rotate(float angle)
-    {
+    {       
         StartCoroutine(RotateCor(angle));
     }
 
@@ -125,17 +134,9 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
         _healthText.text = card.Health.ToString();
     }
 
-    private IEnumerator UpdateTextCor(int oldValue, int value, TMP_Text text, bool checkLessZero = false)
-    {
-        var delta = value > oldValue ? 1 : -1;
-        while (oldValue != value)
-        {
-            oldValue += delta;
-            text.text = oldValue.ToString();
-            yield return new WaitForSeconds(_changeTimeout);
-        }
-
-        if (checkLessZero && value <= 0)
+    private void CheckHealth()
+    {       
+        if (_health <= 0)
             OnHpZeroEvent?.Invoke(this);
     }   
 
