@@ -27,7 +27,7 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
     [Space]
     [SerializeField] private float _changeTimeout = 0.1f;
     [Min(1)]
-    [SerializeField] private float _animationSpeed = 2f;
+    [SerializeField] private float _rotateDuration = 0.5f;
 
     public event Action<Card> OnHpZeroEvent;
 
@@ -107,7 +107,7 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
 
     public void Rotate(float angle)
     {
-        StartCoroutine(RotateCor(angle));
+        transform.DORotate(new Vector3(0, 0, angle), _rotateDuration);        
     }
 
     public void RestorePivotAndPosition()
@@ -138,22 +138,7 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
     {
         if (_health <= 0)
             OnHpZeroEvent?.Invoke(this);
-    }
-
-    private IEnumerator RotateCor(float angle)
-    {
-        var time = 0f;
-        var startAngle = RectTransform.localEulerAngles.z;
-
-        while (time <= 1f)
-        {
-            time += _animationSpeed * Time.deltaTime;
-            var angleProcess = Mathf.LerpAngle(startAngle, -angle, time);
-            RectTransform.localRotation = Quaternion.Euler(0, 0, angleProcess);
-
-            yield return null;
-        }
-    }
+    }   
 
     public void OnBeginDrag(PointerEventData eventData)
     {
