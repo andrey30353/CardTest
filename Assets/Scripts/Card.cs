@@ -22,7 +22,7 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
     [SerializeField] private TMP_Text _healthText;
 
     [Space]
-    [SerializeField] private Image _outlineImage; 
+    [SerializeField] private Image _outlineImage;
 
     [Space]
     [SerializeField] private float _changeTimeout = 0.1f;
@@ -51,9 +51,7 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
         get { return _mana; }
         set
         {
-            var duration = Mathf.Abs (_changeTimeout * (_mana - value));
-            DOVirtual.Float(_mana, value, duration, (v) => _manaText.text = ((int) v).ToString());
-           
+            ChangeValueTween(_mana, value, _manaText);
             _mana = value;
         }
     }
@@ -64,10 +62,8 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
         get { return _attack; }
         set
         {
-            var duration = Mathf.Abs(_changeTimeout * (_attack - value));
-            DOVirtual.Float(_attack, value, duration, (v) => _attackText.text = ((int)v).ToString());           
-            
-            _attack = value;           
+            ChangeValueTween(_attack, value, _attackText);            
+            _attack = value;
         }
     }
 
@@ -77,11 +73,7 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
         get { return _health; }
         set
         {
-            var duration = Mathf.Abs(_changeTimeout * (_health - value));
-            DOVirtual
-                .Float(_health, value, duration, (v) => _healthText.text = ((int)v).ToString())
-                .OnComplete(CheckHealth);
-            
+            ChangeValueTween(_health, value, _healthText, CheckHealth);  
             _health = value;
         }
     }
@@ -114,7 +106,7 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
     }
 
     public void Rotate(float angle)
-    {       
+    {
         StartCoroutine(RotateCor(angle));
     }
 
@@ -134,26 +126,34 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
         _healthText.text = card.Health.ToString();
     }
 
+    private void ChangeValueTween(int oldValue, int value, TMP_Text text, TweenCallback onCompleteAction = null)
+    {
+        var duration = Mathf.Abs(_changeTimeout * (oldValue - value));
+        DOVirtual
+            .Float(oldValue, value, duration, (v) => text.text = ((int)v).ToString())
+            .OnComplete(onCompleteAction);      
+    }
+
     private void CheckHealth()
-    {       
+    {
         if (_health <= 0)
             OnHpZeroEvent?.Invoke(this);
-    }   
+    }
 
     private IEnumerator RotateCor(float angle)
     {
         var time = 0f;
         var startAngle = RectTransform.localEulerAngles.z;
-        
+
         while (time <= 1f)
         {
             time += _animationSpeed * Time.deltaTime;
-            var angleProcess = Mathf.LerpAngle(startAngle, -angle, time);            
+            var angleProcess = Mathf.LerpAngle(startAngle, -angle, time);
             RectTransform.localRotation = Quaternion.Euler(0, 0, angleProcess);
 
             yield return null;
         }
-    }  
+    }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
@@ -161,7 +161,7 @@ public class Card : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHand
 
         _outlineImage.enabled = true;
 
-        OnBeginDragEvent?.Invoke(this);       
+        OnBeginDragEvent?.Invoke(this);
     }
 
     public void OnEndDrag(PointerEventData eventData)
